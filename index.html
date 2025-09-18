@@ -192,7 +192,7 @@
 					const thumb = document.createElement("div");
 					thumb.className = "thumb";
 					const img = document.createElement("img");
-					const fullpath = "images/" + project + "/" + src
+					const fullpath = "/images/" + project + "/" + src
 					img.src = fullpath;
 					thumb.appendChild(img);
 					carousel.appendChild(thumb);
@@ -201,7 +201,7 @@
 					img.addEventListener("click", () => {
 						document.getElementById("modal-img").src = fullpath;
 						document.getElementById("modal").classList.add("active");
-						copyToClipboard(window.location.origin + "/" + fullpath);
+						copyToClipboard(window.location.href + "/" + fullpath);
 					});
 				});
 
@@ -287,7 +287,7 @@
 				modal.classList.add("active");
 
 				// Copiar URL completa
-				const fullUrl = window.location.origin + "/" + img.src.replace(/^\//, '');
+				const fullUrl = window.location.href + "/" + img.src.replace(/^\//, '');
 				copyToClipboard(fullUrl);
 			});
 		});
