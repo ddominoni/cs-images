@@ -1,0 +1,76 @@
+name: Build and Deploy Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write      # para commitar o images.json
+  pages: write         # para publicar no Pages
+  id-token: write      # requerido pelo deploy do Pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Generate images.json
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          const baseDir = path.join(process.cwd(), 'images');
+          const output = {};
+
+          if (fs.existsSync(baseDir)) {
+            const dirs = fs.readdirSync(baseDir, { withFileTypes: true })
+              .filter(d => d.isDirectory());
+
+            dirs.forEach(dir => {
+              const fullPath = path.join(baseDir, dir.name);
+              const files = fs.readdirSync(fullPath)
+                .filter(f => /\.(png|jpg|jpeg|gif|webp)$/i.test(f));
+              output[dir.name] = files;
+            });
+          }
+
+          fs.writeFileSync(
+            path.join(process.cwd(), 'images.json'),
+            JSON.stringify(output, null, 2)
+          );
+          EOF
+
+      - name: Commit updated images.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add images.json
+          git commit -m "chore: update images.json [skip ci]" || echo "No changes"
+          git push
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .   # publica toda a raiz (index.html, images/, images.json)
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

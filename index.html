@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<title>Galeria de Imagens</title>
+	<style>
+		body { font-family: sans-serif; background: #f4f4f4; margin: 20px; }
+		h1 { margin-bottom: 20px; }
+		h2 { margin-top: 40px; }
+		.carousel {
+			display: flex;
+			overflow-x: auto;
+			gap: 10px;
+			padding: 10px 0;
+			scroll-snap-type: x mandatory;
+		}
+		.carousel img {
+			height: 150px;
+			border: 3px solid white;
+			box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+			transition: transform 0.2s;
+			scroll-snap-align: start;
+			cursor: pointer;
+			border-radius: 8px;
+			background: #fff;
+		}
+		.carousel img:hover { transform: scale(1.05); }
+		/* Modal */
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			top: 0; left: 0; right: 0; bottom: 0;
+			background: rgba(0,0,0,0.8);
+			justify-content: center;
+			align-items: center;
+		}
+		.modal img {
+			max-width: 90%;
+			max-height: 90%;
+			border: 5px solid white;
+			box-shadow: 0 8px 12px rgba(0,0,0,0.5);
+			border-radius: 12px;
+		}
+		.empty-message {
+			margin-top: 40px;
+			font-size: 1.2em;
+			color: #666;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<h1>Galeria de Projetos</h1>
+	<div id="gallery"></div>
+	<p id="empty" class="empty-message" style="display:none;">
+		Nenhuma imagem disponível ainda.  
+		Adicione arquivos em <code>/images/</code> e faça um push para vê-los aqui.
+	</p>
+
+	<!-- Modal -->
+	<div id="modal" class="modal">
+		<img id="modal-img" src="">
+	</div>
+
+	<script>
+		async function loadGallery() {
+			try {
+				const resp = await fetch("images.json");
+				if (!resp.ok) throw new Error("images.json não encontrado");
+				const data = await resp.json();
+
+				const container = document.getElementById("gallery");
+				const emptyMsg = document.getElementById("empty");
+
+				if (Object.keys(data).length === 0) {
+					emptyMsg.style.display = "block";
+					return;
+				}
+
+				for (const [project, images] of Object.entries(data)) {
+					const title = document.createElement("h2");
+					title.textContent = project;
+					container.appendChild(title);
+
+					const carousel = document.createElement("div");
+					carousel.className = "carousel";
+
+					images.forEach(img => {
+						const el = document.createElement("img");
+						el.src = `images/${project}/${img}`;
+						el.alt = project;
+						el.onclick = () => openModal(el.src);
+						carousel.appendChild(el);
+					});
+
+					container.appendChild(carousel);
+				}
+			} catch (e) {
+				console.warn(e.message);
+				document.getElementById("empty").style.display = "block";
+			}
+		}
+
+		function openModal(src) {
+			document.getElementById("modal-img").src = src;
+			document.getElementById("modal").style.display = "flex";
+		}
+
+		document.getElementById("modal").onclick = () => {
+			document.getElementById("modal").style.display = "none";
+		};
+
+		loadGallery();
+	</script>
+</body>
+</html>
