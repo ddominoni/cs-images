@@ -2,116 +2,181 @@
 <html lang="pt-BR">
 <head>
 	<meta charset="UTF-8">
-	<title>Galeria de Imagens</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Galeria de Projetos</title>
 	<style>
-		body { font-family: sans-serif; background: #f4f4f4; margin: 20px; }
-		h1 { margin-bottom: 20px; }
-		h2 { margin-top: 40px; }
+		body {
+			font-family: Arial, sans-serif;
+			background: #f4f4f4;
+			margin: 20px;
+		}
+
+		h2 {
+			margin-top: 40px;
+		}
+
+		.carousel-container {
+			position: relative;
+		}
+
 		.carousel {
-			display: flex;
+			display: grid;
+			grid-auto-flow: column;
+			gap: 15px;
 			overflow-x: auto;
-			gap: 10px;
 			padding: 10px 0;
+			scroll-behavior: smooth;
 			scroll-snap-type: x mandatory;
 		}
-		.carousel img {
-			height: 150px;
-			border: 3px solid white;
-			box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-			transition: transform 0.2s;
+
+		.thumb {
+			flex: none;
+			aspect-ratio: 1 / 1;
+			border-radius: 8px;
+			overflow: hidden;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 			scroll-snap-align: start;
 			cursor: pointer;
-			border-radius: 8px;
-			background: #fff;
+			transition: transform 0.3s;
 		}
-		.carousel img:hover { transform: scale(1.05); }
+
+		.thumb:hover {
+			transform: scale(1.05);
+		}
+
+		.thumb img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		/* Responsividade: controla quantos itens cabem por tela */
+		@media (min-width: 1024px) {
+			.carousel {
+				grid-auto-columns: calc((100% - 4 * 15px) / 5);
+			}
+		}
+
+		@media (min-width: 768px) and (max-width: 1023px) {
+			.carousel {
+				grid-auto-columns: calc((100% - 2 * 15px) / 3);
+			}
+		}
+
+		@media (max-width: 767px) {
+			.carousel {
+				grid-auto-columns: calc((100% - 1 * 15px) / 2);
+			}
+		}
+
+		/* Botões */
+		.carousel-button {
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			background: rgba(255,255,255,0.9);
+			border: none;
+			border-radius: 50%;
+			width: 40px;
+			height: 40px;
+			cursor: pointer;
+			font-size: 20px;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+		}
+
+		.carousel-button:hover {
+			background: white;
+		}
+
+		.carousel-button.prev {
+			left: -20px;
+		}
+
+		.carousel-button.next {
+			right: -20px;
+		}
+
 		/* Modal */
 		.modal {
 			display: none;
 			position: fixed;
-			z-index: 1000;
-			top: 0; left: 0; right: 0; bottom: 0;
-			background: rgba(0,0,0,0.8);
+			z-index: 999;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.8);
 			justify-content: center;
 			align-items: center;
 		}
+
 		.modal img {
 			max-width: 90%;
 			max-height: 90%;
-			border: 5px solid white;
-			box-shadow: 0 8px 12px rgba(0,0,0,0.5);
-			border-radius: 12px;
+			border-radius: 10px;
 		}
-		.empty-message {
-			margin-top: 40px;
-			font-size: 1.2em;
-			color: #666;
-			text-align: center;
+
+		.modal.active {
+			display: flex;
 		}
 	</style>
 </head>
 <body>
 	<h1>Galeria de Projetos</h1>
-	<div id="gallery"></div>
-	<p id="empty" class="empty-message" style="display:none;">
-		Nenhuma imagem disponível ainda.  
-		Adicione arquivos em <code>/images/</code> e faça um push para vê-los aqui.
-	</p>
+
+	<h2>Projeto A</h2>
+	<div class="carousel-container">
+		<button class="carousel-button prev">←</button>
+		<div class="carousel">
+			<div class="thumb"><img src="images/projetoA/img1.jpg" alt=""></div>
+			<div class="thumb"><img src="images/projetoA/img2.jpg" alt=""></div>
+			<div class="thumb"><img src="images/projetoA/img3.jpg" alt=""></div>
+		</div>
+		<button class="carousel-button next">→</button>
+	</div>
+
+	<h2>Projeto B</h2>
+	<div class="carousel-container">
+		<button class="carousel-button prev">←</button>
+		<div class="carousel">
+			<div class="thumb"><img src="images/projetoB/img1.jpg" alt=""></div>
+			<div class="thumb"><img src="images/projetoB/img2.jpg" alt=""></div>
+		</div>
+		<button class="carousel-button next">→</button>
+	</div>
 
 	<!-- Modal -->
-	<div id="modal" class="modal">
-		<img id="modal-img" src="">
+	<div class="modal" id="modal">
+		<img id="modal-img" src="" alt="">
 	</div>
 
 	<script>
-		async function loadGallery() {
-			try {
-				const resp = await fetch("images.json");
-				if (!resp.ok) throw new Error("images.json não encontrado");
-				const data = await resp.json();
+		// Modal
+		const modal = document.getElementById("modal");
+		const modalImg = document.getElementById("modal-img");
 
-				const container = document.getElementById("gallery");
-				const emptyMsg = document.getElementById("empty");
+		document.querySelectorAll(".thumb img").forEach(img => {
+			img.addEventListener("click", () => {
+				modalImg.src = img.src;
+				modal.classList.add("active");
+			});
+		});
 
-				if (Object.keys(data).length === 0) {
-					emptyMsg.style.display = "block";
-					return;
-				}
+		modal.addEventListener("click", () => {
+			modal.classList.remove("active");
+		});
 
-				for (const [project, images] of Object.entries(data)) {
-					const title = document.createElement("h2");
-					title.textContent = project;
-					container.appendChild(title);
+		// Botões do carrossel
+		document.querySelectorAll(".carousel-container").forEach(container => {
+			const carousel = container.querySelector(".carousel");
+			const prevBtn = container.querySelector(".carousel-button.prev");
+			const nextBtn = container.querySelector(".carousel-button.next");
 
-					const carousel = document.createElement("div");
-					carousel.className = "carousel";
+			prevBtn.addEventListener("click", () => {
+				carousel.scrollBy({ left: -carousel.offsetWidth, behavior: "smooth" });
+			});
 
-					images.forEach(img => {
-						const el = document.createElement("img");
-						el.src = `images/${project}/${img}`;
-						el.alt = project;
-						el.onclick = () => openModal(el.src);
-						carousel.appendChild(el);
-					});
-
-					container.appendChild(carousel);
-				}
-			} catch (e) {
-				console.warn(e.message);
-				document.getElementById("empty").style.display = "block";
-			}
-		}
-
-		function openModal(src) {
-			document.getElementById("modal-img").src = src;
-			document.getElementById("modal").style.display = "flex";
-		}
-
-		document.getElementById("modal").onclick = () => {
-			document.getElementById("modal").style.display = "none";
-		};
-
-		loadGallery();
+			nextBtn.addEventListener("click", () => {
+				carousel.scrollBy({ left: carousel.offsetWidth, behavior: "smooth" });
+			});
+		});
 	</script>
 </body>
 </html>
