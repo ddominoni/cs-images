@@ -17,6 +17,7 @@
 
 		.carousel-container {
 			position: relative;
+			margin-bottom: 40px;
 		}
 
 		.carousel {
@@ -24,7 +25,7 @@
 			grid-auto-flow: column;
 			gap: 15px;
 			overflow-x: auto;
-			padding: 10px 0;
+			padding: 10px 0 30px; /* espaço pros indicadores */
 			scroll-behavior: smooth;
 			scroll-snap-type: x mandatory;
 		}
@@ -72,7 +73,7 @@
 		/* Botões */
 		.carousel-button {
 			position: absolute;
-			top: 50%;
+			top: 40%;
 			transform: translateY(-50%);
 			background: rgba(255,255,255,0.9);
 			border: none;
@@ -82,18 +83,34 @@
 			cursor: pointer;
 			font-size: 20px;
 			box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+			z-index: 10;
 		}
 
 		.carousel-button:hover {
 			background: white;
 		}
 
-		.carousel-button.prev {
-			left: -20px;
+		.carousel-button.prev { left: -20px; }
+		.carousel-button.next { right: -20px; }
+
+		/* Indicadores */
+		.indicators {
+			display: flex;
+			justify-content: center;
+			gap: 8px;
+			margin-top: -25px;
 		}
 
-		.carousel-button.next {
-			right: -20px;
+		.indicator {
+			width: 10px;
+			height: 10px;
+			background: #ccc;
+			border-radius: 50%;
+			transition: background 0.3s;
+		}
+
+		.indicator.active {
+			background: #333;
 		}
 
 		/* Modal */
@@ -121,26 +138,7 @@
 <body>
 	<h1>Galeria de Projetos</h1>
 
-	<h2>Projeto A</h2>
-	<div class="carousel-container">
-		<button class="carousel-button prev">←</button>
-		<div class="carousel">
-			<div class="thumb"><img src="images/projetoA/img1.jpg" alt=""></div>
-			<div class="thumb"><img src="images/projetoA/img2.jpg" alt=""></div>
-			<div class="thumb"><img src="images/projetoA/img3.jpg" alt=""></div>
-		</div>
-		<button class="carousel-button next">→</button>
-	</div>
-
-	<h2>Projeto B</h2>
-	<div class="carousel-container">
-		<button class="carousel-button prev">←</button>
-		<div class="carousel">
-			<div class="thumb"><img src="images/projetoB/img1.jpg" alt=""></div>
-			<div class="thumb"><img src="images/projetoB/img2.jpg" alt=""></div>
-		</div>
-		<button class="carousel-button next">→</button>
-	</div>
+	<div id="gallery"></div>
 
 	<!-- Modal -->
 	<div class="modal" id="modal">
@@ -148,35 +146,98 @@
 	</div>
 
 	<script>
-		// Modal
-		const modal = document.getElementById("modal");
-		const modalImg = document.getElementById("modal-img");
+		async function loadGallery() {
+			const response = await fetch("images.json");
+			const data = await response.json();
+			const gallery = document.getElementById("gallery");
 
-		document.querySelectorAll(".thumb img").forEach(img => {
-			img.addEventListener("click", () => {
-				modalImg.src = img.src;
-				modal.classList.add("active");
+			Object.entries(data).forEach(([project, images]) => {
+				// Container
+				const container = document.createElement("div");
+				container.className = "carousel-container";
+
+				// Título
+				const title = document.createElement("h2");
+				title.textContent = project;
+				container.appendChild(title);
+
+				// Botão prev
+				const prevBtn = document.createElement("button");
+				prevBtn.className = "carousel-button prev";
+				prevBtn.textContent = "←";
+
+				// Carrossel
+				const carousel = document.createElement("div");
+				carousel.className = "carousel";
+
+				images.forEach(src => {
+					const thumb = document.createElement("div");
+					thumb.className = "thumb";
+					const img = document.createElement("img");
+					img.src = src;
+					thumb.appendChild(img);
+					carousel.appendChild(thumb);
+
+					// Modal ao clicar
+					img.addEventListener("click", () => {
+						document.getElementById("modal-img").src = src;
+						document.getElementById("modal").classList.add("active");
+					});
+				});
+
+				// Botão next
+				const nextBtn = document.createElement("button");
+				nextBtn.className = "carousel-button next";
+				nextBtn.textContent = "→";
+
+				// Indicadores
+				const indicators = document.createElement("div");
+				indicators.className = "indicators";
+				const indicatorCount = Math.ceil(images.length / visibleItems());
+				for (let i = 0; i < indicatorCount; i++) {
+					const dot = document.createElement("div");
+					dot.className = "indicator" + (i === 0 ? " active" : "");
+					indicators.appendChild(dot);
+				}
+
+				// Navegação
+				prevBtn.addEventListener("click", () => {
+					carousel.scrollBy({ left: -carousel.offsetWidth, behavior: "smooth" });
+				});
+				nextBtn.addEventListener("click", () => {
+					carousel.scrollBy({ left: carousel.offsetWidth, behavior: "smooth" });
+				});
+
+				// Atualiza indicadores ao rolar
+				carousel.addEventListener("scroll", () => {
+					const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+					[...indicators.children].forEach((dot, i) => {
+						dot.classList.toggle("active", i === index);
+					});
+				});
+
+				// Monta DOM
+				container.appendChild(prevBtn);
+				container.appendChild(carousel);
+				container.appendChild(nextBtn);
+				container.appendChild(indicators);
+				gallery.appendChild(container);
 			});
+		}
+
+		// Retorna quantos itens cabem na tela
+		function visibleItems() {
+			if (window.innerWidth >= 1024) return 5;
+			if (window.innerWidth >= 768) return 3;
+			return 2;
+		}
+
+		// Fecha modal
+		document.getElementById("modal").addEventListener("click", () => {
+			document.getElementById("modal").classList.remove("active");
 		});
 
-		modal.addEventListener("click", () => {
-			modal.classList.remove("active");
-		});
-
-		// Botões do carrossel
-		document.querySelectorAll(".carousel-container").forEach(container => {
-			const carousel = container.querySelector(".carousel");
-			const prevBtn = container.querySelector(".carousel-button.prev");
-			const nextBtn = container.querySelector(".carousel-button.next");
-
-			prevBtn.addEventListener("click", () => {
-				carousel.scrollBy({ left: -carousel.offsetWidth, behavior: "smooth" });
-			});
-
-			nextBtn.addEventListener("click", () => {
-				carousel.scrollBy({ left: carousel.offsetWidth, behavior: "smooth" });
-			});
-		});
+		loadGallery();
 	</script>
 </body>
 </html>
