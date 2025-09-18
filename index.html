@@ -127,7 +127,9 @@
 		.modal img {
 			max-width: 90%;
 			max-height: 90%;
-			border-radius: 10px;
+			border-radius: 0px;
+			background-color: white;
+    		padding: 10px;
 		}
 
 		.modal.active {
@@ -144,6 +146,21 @@
 	<div class="modal" id="modal">
 		<img id="modal-img" src="" alt="">
 	</div>
+
+	<!-- Toast -->
+	<div id="toast" style="
+	position: fixed;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #333;
+	color: white;
+	padding: 10px 20px;
+	border-radius: 5px;
+	opacity: 0;
+	transition: opacity 0.3s;
+	z-index: 2000;
+	">Copiado para o clipboard!</div>
 
 	<script>
 		async function loadGallery() {
@@ -239,6 +256,39 @@
 		});
 
 		loadGallery();
+
+		const modal = document.getElementById("modal");
+		const modalImg = document.getElementById("modal-img");
+		const toast = document.getElementById("toast");
+
+		async function showToast(message) {
+			toast.textContent = message;
+			toast.style.opacity = "1";
+			setTimeout(() => {
+				toast.style.opacity = "0";
+			}, 2000);
+		}
+
+		async function copyToClipboard(text) {
+			try {
+				await navigator.clipboard.writeText(text);
+				showToast("Copiado para o clipboard!");
+			} catch (err) {
+				showToast("Erro ao copiar!");
+			}
+		}
+
+		document.querySelectorAll(".thumb img").forEach(img => {
+			img.addEventListener("click", () => {
+				// Abrir modal
+				modalImg.src = img.src;
+				modal.classList.add("active");
+
+				// Copiar URL completa
+				const fullUrl = window.location.origin + "/" + img.src.replace(/^\//, '');
+				copyToClipboard(fullUrl);
+			});
+		});
 	</script>
 </body>
 </html>
