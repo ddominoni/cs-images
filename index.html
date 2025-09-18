@@ -49,6 +49,8 @@
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
+			background-color: white;
+			padding: 5px;
 		}
 
 		/* Responsividade: controla quantos itens cabem por tela */
@@ -200,6 +202,7 @@
 					img.addEventListener("click", () => {
 						document.getElementById("modal-img").src = fullpath;
 						document.getElementById("modal").classList.add("active");
+						copyToClipboard(window.location.origin + "/" + fullpath);
 					});
 				});
 
