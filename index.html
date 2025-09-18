@@ -174,13 +174,14 @@
 					const thumb = document.createElement("div");
 					thumb.className = "thumb";
 					const img = document.createElement("img");
-					img.src = src;
+					const fullpath = "images/" + project + "/" + src
+					img.src = fullpath;
 					thumb.appendChild(img);
 					carousel.appendChild(thumb);
 
 					// Modal ao clicar
 					img.addEventListener("click", () => {
-						document.getElementById("modal-img").src = src;
+						document.getElementById("modal-img").src = fullpath;
 						document.getElementById("modal").classList.add("active");
 					});
 				});
